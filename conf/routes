@@ -1,1 +1,3 @@
 GET / @com.rawskys.controllers.InternalUsers.status
+GET /status @com.rawskys.controllers.InternalUsers.status
+POST /register @com.rawskys.controllers.InternalUsers.register
