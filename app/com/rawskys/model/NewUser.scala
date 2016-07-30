@@ -7,7 +7,7 @@ import play.api.data.validation.Constraints.pattern
 import play.api.libs.json._
 import reactivemongo.bson.{BSONDocument, BSONDocumentWriter, BSONObjectID}
 
-case class NewUser(id: Option[String], name: String, pass: Array[Char])
+case class NewUser(id: Option[String], name: String, pass: String)
 
 object NewUser {
 
@@ -19,7 +19,7 @@ object NewUser {
 				val name = (obj \ "user").as[String]
 				val pass = (obj \ "pass").as[String]
 
-				JsSuccess(NewUser(id, name, pass.toCharArray))
+				JsSuccess(NewUser(id, name, pass))
 			} catch {
 				case cause: Throwable => JsError(cause.getMessage)
 			}
@@ -35,19 +35,21 @@ object NewUser {
 			"user" -> nonEmptyText,
 			"pass" -> nonEmptyText(12)
 		) {
-			(id, name, pass) => NewUser(id, name, pass.toCharArray)
+			(id, name, pass) => NewUser(id, name, pass)
 		} { user =>
-			Some(user.id, user.name, user.pass.toString)
+			Some(user.id, user.name, user.pass)
 		}
 	)
 
 	implicit object NewUserWriter extends BSONDocumentWriter[NewUser] {
 
-		override def write(newUser: NewUser): BSONDocument = BSONDocument(
-			"_id" -> newUser.id.map(s => BSONObjectID(s)).getOrElse(BSONObjectID.generate),
-			"user" -> newUser.name,
-			"pass" -> BCrypt.hashpw(newUser.toString, BCrypt.gensalt())
-		)
+		override def write(newUser: NewUser): BSONDocument = {
+			BSONDocument(
+				"_id" -> newUser.id.map(s => BSONObjectID(s)).getOrElse(BSONObjectID.generate),
+				"user" -> newUser.name,
+				"pass" -> BCrypt.hashpw(newUser.pass, BCrypt.gensalt())
+			)
+		}
 	}
 
 }
